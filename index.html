@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.io Chat</title>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <input id="message" autocomplete="off" /><button id="send">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let userId = localStorage.getItem("userId");
+        const socket = io({
+          query: { userId },
+        });
+
+        socket.on("welcome", (data) => {
+          localStorage.setItem("userId", data.userId);
+          const messages = document.getElementById("messages");
+          data.messages.forEach((msg) => {
+            const messageItem = document.createElement("li");
+            messageItem.textContent = `${msg.name}: ${msg.message}`;
+            messages.appendChild(messageItem);
+          });
+        });
+
+        document.getElementById("send").onclick = () => {
+          const message = document.getElementById("message").value;
+          socket.emit("message", { message });
+          document.getElementById("message").value = "";
+        };
+
+        socket.on("message", (data) => {
+          const messages = document.getElementById("messages");
+          const messageItem = document.createElement("li");
+          messageItem.textContent = `${data.name}: ${data.message}`;
+          messages.appendChild(messageItem);
+        });
+      });
+    </script>
+  </body>
+</html>
