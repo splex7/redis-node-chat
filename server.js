@@ -7,10 +7,18 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Redis 클라이언트 생성
 const redisClient = redis.createClient({
   host: process.env.REDIS_HOST || "localhost",
   port: process.env.REDIS_PORT || 6379,
+});
+
+// Redis 초기화 코드
+redisClient.flushall((err, succeeded) => {
+  if (err) {
+    console.error("Failed to clear Redis:", err);
+  } else {
+    console.log("Redis cleared:", succeeded);
+  }
 });
 
 let anonymousCounter = 0;
@@ -18,28 +26,73 @@ let anonymousCounter = 0;
 io.on("connection", (socket) => {
   let userId = socket.handshake.query.userId;
 
-  // Redis에서 채팅 기록 가져오기
   redisClient.lrange("messages", 0, -1, (err, data) => {
     const messages = data.map((item) => JSON.parse(item));
 
     if (userId) {
-      redisClient.hget("users", userId, (err, username) => {
-        if (username) {
-          socket.username = username;
+      redisClient.hget("users", userId, (err, userData) => {
+        if (userData) {
+          const user = JSON.parse(userData);
+          socket.username = user.username;
+          socket.createdAt = user.createdAt;
         } else {
-          anonymousCounter++;
-          socket.username = `익명의유저${anonymousCounter}`;
-          userId = `user${anonymousCounter}`;
-          redisClient.hset("users", userId, socket.username);
+          // 만약 사용자 데이터가 없다면, 기본값 설정
+          socket.username = `익명의유저${Math.floor(Math.random() * 1000000)}`;
+          socket.createdAt = new Date().toLocaleString();
+          redisClient.hset(
+            "users",
+            userId,
+            JSON.stringify({
+              username: socket.username,
+              createdAt: socket.createdAt,
+            })
+          );
         }
-        socket.emit("welcome", { userId, name: socket.username, messages });
+        socket.emit("welcome", {
+          userId,
+          name: socket.username,
+          createdAt: socket.createdAt,
+          messages,
+        });
       });
     } else {
-      anonymousCounter++;
-      socket.username = `익명의유저${anonymousCounter}`;
-      userId = `user${anonymousCounter}`;
-      redisClient.hset("users", userId, socket.username);
-      socket.emit("welcome", { userId, name: socket.username, messages });
+      // userId가 없을 경우 기본값 설정
+      socket.username = `익명의유저${Math.floor(Math.random() * 1000000)}`;
+      socket.createdAt = new Date().toLocaleString();
+      userId = `user${Math.floor(Math.random() * 1000000)}`;
+      redisClient.hset(
+        "users",
+        userId,
+        JSON.stringify({
+          username: socket.username,
+          createdAt: socket.createdAt,
+        })
+      );
+      socket.emit("welcome", {
+        userId,
+        name: socket.username,
+        createdAt: socket.createdAt,
+        messages,
+      });
+    }
+  });
+
+  socket.on("setNickname", (data) => {
+    if (data.username) {
+      socket.username = data.username;
+      redisClient.hset(
+        "users",
+        userId,
+        JSON.stringify({
+          username: socket.username,
+          createdAt: socket.createdAt,
+        })
+      );
+      socket.emit("nicknameSet", {
+        userId,
+        name: socket.username,
+        createdAt: socket.createdAt,
+      });
     }
   });
 

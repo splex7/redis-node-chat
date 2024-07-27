@@ -2,44 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Socket.io Chat</title>
+    <title>Chat</title>
+    <style>
+      #chat-container {
+        display: none;
+      }
+      #user-info {
+        margin-bottom: 20px;
+      }
+    </style>
   </head>
   <body>
-    <ul id="messages"></ul>
-    <input id="message" autocomplete="off" /><button id="send">Send</button>
-
+    <div id="user-info">
+      <p>Username: <span id="username-display"></span></p>
+      <p>Created At: <span id="created-at-display"></span></p>
+    </div>
+    <div id="nickname-container">
+      <label for="nickname">Enter your nickname:</label>
+      <input type="text" id="nickname" placeholder="Enter your nickname" />
+      <button onclick="saveNickname()">Save</button>
+    </div>
+    <div id="chat-container">
+      <div id="messages"></div>
+      <input type="text" id="message-input" placeholder="Enter your message" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        let userId = localStorage.getItem("userId");
-        const socket = io({
-          query: { userId },
-        });
+      // 세션 스토리지에서 userId와 username을 가져오기
+      let userId = sessionStorage.getItem("userId");
+      let username = sessionStorage.getItem("username");
+      let createdAt = sessionStorage.getItem("createdAt");
 
-        socket.on("welcome", (data) => {
-          localStorage.setItem("userId", data.userId);
-          const messages = document.getElementById("messages");
-          data.messages.forEach((msg) => {
-            const messageItem = document.createElement("li");
-            messageItem.textContent = `${msg.name}: ${msg.message}`;
-            messages.appendChild(messageItem);
-          });
-        });
+      if (!userId || !username || !createdAt) {
+        // 새로운 유저 생성
+        userId = "user" + Math.floor(Math.random() * 1000000);
+        username = "익명의유저" + Math.floor(Math.random() * 1000000);
+        createdAt = new Date().toLocaleString();
 
-        document.getElementById("send").onclick = () => {
-          const message = document.getElementById("message").value;
-          socket.emit("message", { message });
-          document.getElementById("message").value = "";
-        };
+        // 닉네임 입력 받기
+        document.getElementById("nickname-container").style.display = "block";
+        document.getElementById("chat-container").style.display = "none";
+      } else {
+        // 기존 유저 표시
+        document.getElementById("username-display").innerText = username;
+        document.getElementById("created-at-display").innerText = createdAt;
+        document.getElementById("nickname-container").style.display = "none";
+        document.getElementById("chat-container").style.display = "block";
+      }
 
-        socket.on("message", (data) => {
-          const messages = document.getElementById("messages");
-          const messageItem = document.createElement("li");
-          messageItem.textContent = `${data.name}: ${data.message}`;
-          messages.appendChild(messageItem);
-        });
+      // 소켓 연결
+      const socket = io({
+        query: { userId: userId },
       });
+
+      socket.on("welcome", (data) => {
+        console.log("Welcome:", data);
+      });
+
+      socket.on("nicknameSet", (data) => {
+        sessionStorage.setItem("userId", data.userId);
+        sessionStorage.setItem("username", data.name);
+        sessionStorage.setItem("createdAt", data.createdAt);
+
+        document.getElementById("username-display").innerText = data.name;
+        document.getElementById("created-at-display").innerText =
+          data.createdAt;
+        document.getElementById("nickname-container").style.display = "none";
+        document.getElementById("chat-container").style.display = "block";
+      });
+
+      socket.on("message", (message) => {
+        const messageElement = document.createElement("p");
+        messageElement.textContent = `${message.name}: ${message.message}`;
+        document.getElementById("messages").appendChild(messageElement);
+      });
+
+      function saveNickname() {
+        const input = document.getElementById("nickname").value;
+        if (input) {
+          username = input;
+        }
+        socket.emit("setNickname", { username: username });
+      }
+
+      function sendMessage() {
+        const message = document.getElementById("message-input").value;
+        socket.emit("message", { message: message });
+        document.getElementById("message-input").value = "";
+      }
     </script>
   </body>
 </html>
