@@ -1,13 +1,17 @@
+# 예시 Dockerfile
 FROM node:14
 
 WORKDIR /app
 
-# package.json과 package-lock.json만 복사하여 의존성을 설치합니다.
+# 필요한 파일을 복사합니다.
 COPY package*.json ./
-RUN npm install
-
-# 나머지 애플리케이션 파일을 복사합니다.
 COPY . .
 
-EXPOSE 3000
+# 종속성을 설치합니다.
+RUN npm install
+
+# 앱을 빌드합니다.
+RUN npm run build
+
+# 앱을 시작합니다.
 CMD ["node", "server.js"]

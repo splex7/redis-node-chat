@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: splex7/redis-node-chat:latest # 적절한 이미지로
+          image: splex7/redis-node-chat:1.0.0 # 적절한 이미지로
           ports:
             - containerPort: 3000
           env:
@@ -47,4 +47,4 @@ spec:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-  type: NodePort # 혹은 LoadBalancer로 변경할 수 있습니다.
+  type: LoadBalancer # 혹은 LoadBalancer로 변경할 수 있습니다.
