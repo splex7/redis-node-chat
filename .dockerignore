@@ -1,0 +1,12 @@
+# .dockerignore
+
+docker-compose.yaml
+# Ignore the loadtest and K8s directories
+loadtest
+K8s
+
+# Ignore node_modules directory (common practice)
+node_modules
+
+# Ignore npm debug log files
+npm-debug.log
