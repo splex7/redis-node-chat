@@ -1,20 +1,23 @@
-# Node.js 베이스 이미지 사용
+# Node.js 이미지를 기반으로 합니다.
 FROM node:20
 
-# 작업 디렉토리 설정
+# yarn을 전역으로 설치합니다.
+RUN npm install -g yarn
+
+# 작업 디렉토리를 설정합니다.
 WORKDIR /app
 
-# package.json과 package-lock.json 파일을 작업 디렉토리에 복사
-COPY package*.json ./
+# package.json 파일을 복사합니다.
+COPY package.json ./
 
-# 종속성 설치
-RUN npm install
+# yarn을 사용하여 종속성을 설치합니다.
+RUN yarn install
 
-# 현재 디렉토리의 모든 파일을 작업 디렉토리로 복사
+# 나머지 애플리케이션 코드를 복사합니다.
 COPY . .
 
-# 앱 포트 노출
+# 포트를 노출합니다.
 EXPOSE 3000
 
-# 애플리케이션 시작 명령어
-CMD ["npm", "start"]
+# 애플리케이션을 시작합니다.
+CMD ["node", "server.js"]
