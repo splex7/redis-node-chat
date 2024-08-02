@@ -1,14 +1,14 @@
-# Node.js 이미지를 기반으로 합니다.
+# Node.js 이미지를 기반으로 합니다 (Debian)
 FROM node:20
-
-# yarn을 전역으로 설치합니다.
-RUN npm install -g yarn
 
 # 작업 디렉토리를 설정합니다.
 WORKDIR /app
 
 # package.json 파일을 복사합니다.
 COPY package.json ./
+
+# yarn을 전역으로 설치합니다.
+RUN npm install -g yarn
 
 # yarn을 사용하여 종속성을 설치합니다.
 RUN yarn install
