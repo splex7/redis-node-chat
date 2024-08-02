@@ -7,9 +7,6 @@ WORKDIR /app
 # package.json 파일을 복사합니다.
 COPY package.json ./
 
-# yarn을 전역으로 설치합니다.
-RUN npm install -g yarn
-
 # yarn을 사용하여 종속성을 설치합니다.
 RUN yarn install
 
