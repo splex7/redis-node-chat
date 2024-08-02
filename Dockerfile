@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 3000
 
 # 애플리케이션을 시작합니다.
-CMD ["node", "server.js"]
+CMD ["node", "/app/server.js"]
